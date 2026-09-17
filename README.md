@@ -499,5 +499,112 @@ $ whoami
 mika_admin
 
 ```
+14. Setelah gagal mengakses FTP, Eiri melancarkan serangan brute-force terhadap form login web Alice. Analisis file capture wired_bruteforce.pcapng untuk mengidentifikasi alamat IP penyerang, target IP beserta port yang diserang, password user lain_admin yang berhasil ditembus, serta web server software dan versi yang dilaporkan pada response header. Validasi temuan kalian pada socket server: (link file) nc [IP_Group] 3401 
+
+Connect ke nc dulu
+
+<img width="512" height="336" alt="image" src="https://github.com/user-attachments/assets/8ae606e8-67e7-4d61-ac30-37ad39e00ff0" />
+
+intinya ditanyain yang nyerang siapa yang di serang apa dan portnya berapa, password user lain_admin dan web server software dan versi berapa yang dilaporkan di response header?
+
+1) Nyari tau IP yang nyerang dan yang di serang
+Karena ini bruteforce ke form login kita filter aja Post ke login.php
+```text
+http.request.method == "POST" && http.request.uri == "/login.php"
+```
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/d7645418-ffaa-47f4-bc49-b207b560b2e0" />
+
+Bisa dilihat disini tuh ip  172.26.7.50 nyerang dan spam ke ip 172.26.7.100
+jadi yg nyerang tuh 172.26.7.50  dan yang di serang  172.26.7.100 untuk portnya 8080
+
+2) nyari password user admin_lain sama web servernya pake filter ini
+
+```text
+frame contains "lain_admin"
+```
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/87021b6d-b13f-41ce-9f71-d46455be495f" />
+
+Follow TCP Stream 
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/9939b0f9-841b-4ab9-80d1-7a20b345e5ba" />
+
+Ketemu Password sama Softwarenya
+
+FLAG:
+```text
+KOMJAR26{W1r3d_Brut3_FGiR2LkTjDaBkskZAuazHKpIM}
+```
+
+15. Eiri menyusup ke ruang server dan memasang perangkat keyboard USB berbahaya pada node Alice. Buka file capture wired_usb_hid.pcap, identifikasi Vendor ID dan Product ID perangkat USB dari deskriptor USB, alamat nomor device USB, serta pesan rahasia yang berhasil dicuri dari keystroke. Validasi temuan kalian pada socket server: (link file) nc [IP_Group] 3402 
+
+<img width="1245" height="652" alt="image" src="https://github.com/user-attachments/assets/41e33dc4-6195-49ed-ac1b-093b02821ab7" />
+
+kita ditanya Vendor ID, Product Id USB HID Devicenya, USB device address yg digunakan dan disuruh decode USB HID Keystroke.
+
+1) Cari Vendor ID dan Product ID
+
+```text
+usb.idVendor
+```
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/31cb472c-963e-44ac-ba8e-1b5a2f6524ff" />
+
+Disini id vendornya 0x046d kebetulan nemu jg id productnya 0xc31c tapi klo mau filter sendiri bisa jg pake:
+```text
+usb.idProduct 
+```
+
+2) Nyari adressnya
+```text
+usb.device_address!=0
+```
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/02d6b6a1-1ebd-47ab-a3f3-6854eb2f17fc" />
+
+Disini Device Addressnya 7
+3) Decode
+```text
+usb.capdata != 00:00:00:00:00:00:00:00
+```
+Pake filter itu lalu
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/4cc06bdc-f0f0-4ded-af2a-21c9584045e8" />
+
+cek USB URB di Leftover Capture Data, ambil bytes ketiga dari semua itu berikut contoh yg udah diambil
+```text
+1a 0c 15 08 07 2d 13 15 12 17 12 06 12 0f 2d 24 2d 0c 16 2d 04 0f 0c 19 08 2d 1f 27 1f 23
+```
+Decode aja ini tabelnya di halaman 90
+```text
+https://drive.google.com/file/d/1QKb0sZ2LWxbQ_jZrwCXtC1R3McUKuE3E/view 
+```
+intinya dapet… 
+
+```text
+ Wired_Protocol_7_is_alive_2026
+```
+FLAG:
+```text
+ KOMJAR26{USB_K3ystr0k3_8nghqGD2krJSejHMYiGM4uxdr}
+```
+16. Eiri meletakkan file malware di server. Dari file capture wired_ftp_theft.pcap, lakukan analisis lalu lintas FTP untuk mengidentifikasi alamat IP server FTP penyerang, banner software FTP yang digunakan, kredensial login penyerang, serta ukuran (size in bytes) dari file malware knights_payload.exe yang diunduh. Validasi temuan kalian pada socket server: (link file) nc [IP_Group] 3403 
+
+<img width="1156" height="766" alt="image" src="https://github.com/user-attachments/assets/e00326a6-eada-47ef-a1ff-d2b43e5a299f" />
+
+1) Filter biar yg muncul tuh traffic download dari file ftp aja
+```text
+ftp.request.command == "RETR"
+```
+<img width="1920" height="1140" alt="image" src="https://github.com/user-attachments/assets/6fd76024-cb86-42f6-a095-def6488dce79" />
+
+Nah ada 3 tapi yg di tanya malware jadi kita tcp stream yg knight_payload.exe oyaa untuk What is the IP address of the FTP server used to download the malware? itu ada di destination.
+<img width="1920" height="1140" alt="image" src="https://github.com/user-attachments/assets/af21c131-f8f5-4790-88e5-d39d5442d06b" />
+
+ini untuk tampilan tcp streamnya yang ditanyain tadi What FTP server software banner is returned upon connection? itu ada “vsftpd 3.0.5” terus user password dan size jga udh ada di sini.
+
+FLAG: 
+```text
+KOMJAR26{FTP_Th3ft_JP7yDIDYOlzCeSL40aNnnWcV9}
+```
 
 
