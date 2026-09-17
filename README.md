@@ -395,4 +395,109 @@ RST-ACK (port tertutup):
 
 ![](img/2026-09-17-13-45-14-image.png)
 
+13. Lain memerintahkan agar administrasi jarak jauh menggunakan SSH secara aman tanpa password. Install OpenSSH server pada node Knights, buat pasangan kunci SSH (ssh-keygen) pada node Mika untuk user mika_admin, dan konfigurasikan public key authentication (PasswordAuthentication no). Lakukan koneksi SSH dari node Mika ke node Knights, tangkap sesi menggunakan Wireshark, identifikasi paket Protocol Version Exchange dan Key Exchange, serta jelaskan mengapa kredensial tidak terlihat dalam bentuk teks terbuka seperti pada Telnet.
+
+Knights:
+
+* Install OpenSSH Server
+
+```
+root@knights:~# apt-get update && apt-get install openssh-server -y
+```
+
+* Aktifkan Public Key & Password authentication
+
+```
+root@knights:~# sed -i 's/^#\s*PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+root@knights:~# sed -i 's/^#\s*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+root@knights:~# sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+root@knights:~# grep -E "PasswordAuthentication|PermitRootLogin|Pubkey" /etc/ssh/sshd_config
+PermitRootLogin yes
+PubkeyAuthentication yes
+PasswordAuthentication yes
+
+```
+
+* Restart SSH
+
+```
+root@knights:~# service ssh restart
+```
+
+* Tambah user `mika_admin`
+
+```
+root@knights:~# useradd -m mika_admin && echo "mika_admin:mika_admin" | chpasswd
+```
+
+Mika:
+
+* Buat SSH private/public key
+
+```
+root@mika:~# ssh-keygen -t rsa -b 2048 -N '' -f ~/.ssh/id_rsa Generating public/private rsa key pair.
+Created directory '/root/.ssh'.
+Your identification has been saved in /root/.ssh/id_rsa
+Your public key has been saved in /root/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:yvXJFXw5C7tRoE8agR9eNVNzOg1kO/ejB3p1ZObbFdk root@mika
+The key's randomart image is:
++---[RSA 2048]----+
+|         .. .oBoo|
+|        . .+.o O=|
+|         ooo= XoE|
+|          o= * @o|
+|        S . =..o=|
+|     . o o o.o+ *|
+|      o   +..o o.|
+|            . .  |
+|                 |
++----[SHA256]-----+
+
+```
+
+* Tambahkan SSH key ke Knights
+
+```
+root@mika:~# ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub mika_admin@192.234.3.2
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+mika_admin@192.234.3.2's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with: "ssh -i /root/.ssh/id_rsa -o 'StrictHostKeyChecking=no' 'mika_admin@192.234.3.2'"
+and check to make sure that only the key(s) you wanted were added.
+
+```
+
+* Login
+
+```
+root@mika:~# ssh mika_admin@192.234.3.2Linux knights 6.8.0-90-generic #91-Ubuntu SMP PREEMPT_DYNAMIC Tue Nov 18 14:14:30 UTC 2025 x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+8888888b.           888      d8b 888b    888          888
+888  "Y88b          888      Y8P 8888b   888          888
+888    888          888          88888b  888          888
+888    888  .d88b.  88888b.  888 888Y88b 888  .d88b.  888888
+888    888 d8P  Y8b 888 "88b 888 888 Y88b888 d8P  Y8b 888
+888    888 88888888 888  888 888 888  Y88888 88888888 888
+888  .d88P Y8b.     888 d88P 888 888   Y8888 Y8b.     Y88b.
+8888888P"   "Y8888  88888P"  888 888    Y888  "Y8888   "Y888
+
+  DebiNet - Lightweight Debian-based Networking Toolbox
+  Type "debinet-tools" for available utilities
+$ whoami
+mika_admin
+
+```
+
 
