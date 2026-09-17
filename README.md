@@ -312,4 +312,87 @@ Reply:
 
 ![](img/2026-09-17-13-39-40-image.png)
 
+11. Buktikan kelemahan protokol Telnet dengan membuat akun phantom_user dan password wired_ghost pada layanan telnetd di node Chisa. Lakukan login Telnet dari node Eiri ke node Chisa dan tangkap sesi menggunakan Wireshark. Tunjukkan kredensial plain text melalui fitur Follow TCP Stream, serta jelaskan mengapa setiap karakter terkirim dalam paket TCP terpisah.
+
+Tes telnetd:
+
+```
+root@eiri:~# telnet 192.234.2.2
+Trying 192.234.2.2...
+Connected to 192.234.2.2.
+Escape character is '^]'.
+Linux 6.8.0-90-generic (chisa) (pts/1)
+
+chisa login: 
+Password: 
+Login incorrect
+
+chisa login: phantom_user
+Password: 
+8888888b.           888      d8b 888b    888          888
+888  "Y88b          888      Y8P 8888b   888          888
+888    888          888          88888b  888          888
+888    888  .d88b.  88888b.  888 888Y88b 888  .d88b.  888888
+888    888 d8P  Y8b 888 "88b 888 888 Y88b888 d8P  Y8b 888
+888    888 88888888 888  888 888 888  Y88888 88888888 888
+888  .d88P Y8b.     888 d88P 888 888   Y8888 Y8b.     Y88b.
+8888888P"   "Y8888  88888P"  888 888    Y888  "Y8888   "Y888
+
+  DebiNet - Lightweight Debian-based Networking Toolbox
+  Type "debinet-tools" for available utilities
+$ uname -a
+Linux chisa 6.8.0-90-generic #91-Ubuntu SMP PREEMPT_DYNAMIC Tue Nov 18 14:14:30 UTC 2025 x86_64 GNU/Linux
+
+```
+
+Wreshark -> Trace pacet -> Ambl pacet telnet -> Follow TCP Stream
+
+![](img/2026-09-17-13-42-07-image.png)
+
+Kredensial terlihat jelas di capture Wireshark.
+
+Telnet secara default beroperasi pada mode "Character-at-a-time" (Karakter-demi-karakter). Setiap kali menekan satu tombol di keyboard (misalnya huruf 'p' pada kata 'phantom'), klien Telnet langsung membungkus huruf tersebut ke dalam satu paket TCP dan mengirimkannya ke server. Server menerima huruf 'p' tersebut, memprosesnya, dan mengirimkan kembali (memantulkan/echo) huruf 'p' ke klien dalam paket TCP terpisah agar huruf tersebut muncul di layar monitor klien.
+
+12. Alice mencurigai Knights menjalankan beberapa layanan rahasia di node-nya. Lakukan pemindaian port dari node Alice ke node Knights menggunakan Netcat (nc) untuk memeriksa port 22 (SSH) dan 80 (HTTP) dalam keadaan terbuka, serta port rahasia 7777 dalam keadaan tertutup. Analisis di Wireshark perbedaan TCP Flag yang dikembalikan antara port terbuka (SYN-ACK) dengan port tertutup (RST-ACK).
+
+Buka port 80 & 22
+
+```
+root@knights:~# nc -lvp 80 &
+[1] 362
+root@knights:~# Listening on 0.0.0.0 80
+
+root@knights:~# nc -lvp 22 &
+[2] 363
+root@knights:~# Listening on 0.0.0.0 22
+
+root@knights:~#
+```
+
+Kemudian, cek di Alice:
+
+```
+root@alice:~# nc -zv 192.234.3.2 22 80
+
+Connection to 192.234.3.2 22 port [tcp/ssh] succeeded!
+Connection to 192.234.3.2 80 port [tcp/http] succeeded!
+root@alice:~# nc -zv 192.234.3.2 7777 
+nc: connect to 192.234.3.2 port 7777 (tcp) failed: Connection refused
+root@alice:~# 
+```
+
+Capture Wireshark:
+
+![](img/2026-09-17-13-44-24-image.png)
+
+
+
+SYN-ACK (port terbuka):
+
+![](img/2026-09-17-13-44-49-image.png)
+
+RST-ACK (port tertutup):
+
+![](img/2026-09-17-13-45-14-image.png)
+
 
