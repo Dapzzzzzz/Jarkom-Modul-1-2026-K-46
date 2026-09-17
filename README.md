@@ -1,9 +1,9 @@
 # Jarkom K-46
 
-| Nama              | NRP        |
-| ----------------- | ---------- |
-| Hendra Manudinata | 5027251051 |
-|                   |            |
+| 	Nama              	| NRP        |
+| ---------------------	| ---------- |
+| Hendra Manudinata 	| 5027251051 |
+| Daffa Rifqi As Shidiq	| 5027251038 |
 
 * Kelompok: K-46
 
@@ -607,4 +607,106 @@ FLAG:
 KOMJAR26{FTP_Th3ft_JP7yDIDYOlzCeSL40aNnnWcV9}
 ```
 
+17. Alice membuat halaman web di node-nya. Eiri memanfaatkan celah untuk mengunduh payload berbahaya ke sistem Alice. Analisis file capture wired_http_c2.pcap untuk mengidentifikasi nama domain (Host) tempat malware diunduh, alamat IP server penyerang, nama file executable malware yang diunduh, serta kode status HTTP yang dikembalikan. Validasi temuan kalian pada socket server: (link file) nc [IP_Group] 3404 
 
+<img width="1053" height="478" alt="image" src="https://github.com/user-attachments/assets/14cacb4c-b778-4cd5-b56a-c9c8ce5d634a" />
+
+1) Menyaring trafic yang request mengunduh atau mengakses file exe
+```text
+http.request.uri contains ".exe"
+```
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/9f030759-ac46-4def-a6d4-ec4f44b1e8d7" />
+Dari sini langsung HTTP/TCP Stream aja
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/2a78c8dc-2580-4e75-8bb0-25d88504ebfb" />
+
+Nah dapet tuh host, nama file malware payload sama http status responses untuk ipnya ada di gambar sebelumnya.
+
+FLAG: 
+```text
+KOMJAR26{Navi_C2_D0wnl04d_sopLvkEmLS99gMVQOcvru3FWj}
+```
+
+18. Eiri mengubah taktik penyerangan dengan menanamkan file malware menggunakan protokol file sharing SMB. Analisis file capture wired_smb_transfer.pcapng untuk mengidentifikasi nama protokol jaringan yang dieksploitasi, IP pengirim dan penerima, folder tujuan penyimpanan malware pada sistem korban, serta nama file executable malware yang ditransfer. Validasi temuan kalian pada socket server: (link file) nc [IP_Group] 3405
+
+<img width="1129" height="604" alt="image" src="https://github.com/user-attachments/assets/b78a63b4-b8a7-4179-9247-160d7f01a566" />
+
+1) Filter supaya hanya menampilkan trafic jaringan yang sedang mentransfer file exe.
+```text
+smb2.filename contains "exe"
+```
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/db13c895-5f8d-4d5a-ab4f-a81d7da3e443" />
+
+protocolnya SMB2 untuk ip yg ngirim malware 10.7.3.100 dan ip yg nerima malware 10.7.1.50 lalu kita buka salah satu terus buka SMB2 dan Guid Handle
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/8e40584f-57d0-41d0-a118-2adb6d6fa04d" />
+
+bakal ada directory sama nama filenya.
+FLAG: 
+```text
+KOMJAR26{SMB_Tr4nsf3r_CGxOjOH7b8nlH1ZurdYCQmfih}
+```
+19. Eiri meneror jaringan dengan mengirimkan email pemerasan melalui protokol SMTP tanpa enkripsi. Analisis file capture wired_smtp_threat.pcap pada stream TCP terkait, identifikasi alamat email korban yang ditargetkan, password korban yang diklaim bocor oleh penyerang, jenis malware yang diinfeksikan, batas waktu (dalam hari) yang diberikan, serta MailClientID yang tercantum pada pesan. Validasi temuan kalian pada socket server: (link file) nc [IP_Group] 3406 
+
+<img width="1231" height="736" alt="image" src="https://github.com/user-attachments/assets/6c734661-2235-46be-a5b8-6c52f2b12ed1" />
+
+intinya disuruh nyari email yg jadi target terus password, jenis malware,deadline dan MailClientIDnya
+
+1) Filter penerima email dalam trafik
+```text
+smtp.req.command == "RCPT"
+```
+<img width="1920" height="1140" alt="image" src="https://github.com/user-attachments/assets/d0a01feb-18aa-4144-ab8b-fa2e4719b8db" />
+
+disini ada 3 email tapi yang mencurigakan victim@protocol7.co.jp
+saat kita tcp stream 
+
+<img width="1920" height="1140" alt="image" src="https://github.com/user-attachments/assets/4a51b645-b1b5-40a4-8983-57092ffce636" />
+
+Ada percakapan kaya ancaman gituu yang isinya tuh jawaban dari soal 19
+
+FLAG : 
+```text
+KOMJAR26{SMTP_Ext0rt10n_z27nUNA8Uri3niZLGl03HcMmT}
+```
+20. Untuk rencana pamungkasnya, Eiri menyembunyikan komunikasi malware di balik saluran terenkripsi TLS. Namun Alice telah menyediakan file keylog untuk mendekripsi lalu lintas data tersebut. Analisis file capture wired_tls_decrypt.pcapng bersama keyslogfile.txt untuk mengidentifikasi versi protokol TLS yang dinegosiasikan, nama domain (SNI) yang diakses, alamat IP server HTTPS penyerang, User-Agent yang digunakan, serta HTTP request method dan path yang tersembunyi di dalam sesi dekripsi. Validasi temuan kalian pada socket server: (link file) nc [IP_Group] 3407 
+
+<img width="1234" height="742" alt="image" src="https://github.com/user-attachments/assets/40f6231b-d672-41f6-9675-bf418941f041" />
+
+1) Okee pertama kita harus masukin dulu keyslogfile.txt ke wiresharknya caranya tuh edit > protocols > TLS > masukin filenya ke (Pre)-Master-Secret log filename.
+<img width="1054" height="853" alt="image" src="https://github.com/user-attachments/assets/38b5239b-9b8a-4a59-9383-bfb3189e034d" />
+
+ini tampilan setelahnya
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/b77cb066-3ef6-4645-8247-f4b7bcefdbf3" />
+
+Oke untuk pertanyaan pertama What specific TLS protocol version was negotiated for the encrypted communication? ini tuh ada di Transport Layer Security yaitu TLS 1.2 sebenernya kalo jawab TLSv1.2 jugaa benarr.
+
+Oke untuk pertanyaan kedua What domain name (SNI / Host) was requested by the client during the TLS handshake?
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/98512780-2646-4a5a-a6a9-eb64d63255c7" />
+Aku tls stream yang no 1 atau bisa liat aja itu SNI=example.com 
+
+Pertanyaan ketiga What is the IP address of the HTTPS server? ada disini
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/b6bd7ecf-12d0-4c13-a0ad-ad8241bb2dab" />
+
+Pertanyaan selanjutnya What User-Agent string was used by the client during the decrypted HTTP session? filter supaya cuma menampilkan http.request
+```text
+http.request
+```
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/5d420f7f-8d43-450b-a8a4-a52d1c2b6194" />
+
+Lalu HTTP stream
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/8570d57a-eda2-4901-8db7-d10292db499a" />
+
+Yeyy ketemu 
+oke pertanyaan terakhir What HTTP request method and path was sent in the decrypted request? ada disini
+
+<img width="1920" height="1128" alt="image" src="https://github.com/user-attachments/assets/6b376ecf-0c8e-47af-974e-019edafe3fd4" />
+sebenernya di info dan http stream tadi jugaa ada.
+
+FLAG:
+```text
+KOMJAR26{TLS_D3crypt_wE38nr4F0iCb2wBr5wnvLIhqI}
+```
